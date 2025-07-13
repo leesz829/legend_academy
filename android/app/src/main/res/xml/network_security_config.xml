@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+	<domain-config cleartextTrafficPermitted="true">
+		<domain includeSubdomains="true">221.146.13.175</domain>
+		<domain includeSubdomains="true">10.0.1.1</domain>
+		<domain includeSubdomains="true">49.50.131.78</domain>
+		<!-- HTTP 통신을 허용할 다른 도메인이 있다면 추가 -->
+		<!-- <domain includeSubdomains="true">another-domain.com</domain> -->
+	</domain-config>
+</network-security-config>
