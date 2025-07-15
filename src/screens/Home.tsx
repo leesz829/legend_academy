@@ -2,7 +2,7 @@ import { RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ColorType, ScreenNavigationProp, StackParamList } from '@types';
-import { Image, ScrollView, StyleSheet, View, Platform, BackHandler, useWindowDimensions, Alert } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, Platform, BackHandler, useWindowDimensions, Alert, Text, TouchableOpacity } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { WebViewNativeEvent } from 'react-native-webview/lib/WebViewTypes';
 import { HeaderBackButton } from '@react-navigation/elements';
@@ -28,6 +28,8 @@ export const Home = (props: Props) => {
   const [navState, setNavState] = useState<WebViewNativeEvent>();
   const [canGoBack, setCanGoBack] = useState(false);
   const [isMainPage, setIsMainPage] = useState(false); // [추가] 메인 페이지 여부를 저장할 상태
+  const [isError, setIsError] = useState(false); // 오류 상태를 관리할 state
+  const [errorDetails, setErrorDetails] = useState(''); // 오류 상세 정보를 저장할 state
 
   const navigation = useNavigation();
 
@@ -43,8 +45,9 @@ export const Home = (props: Props) => {
     const checkTokenAndSetUrl = async () => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
+        const memberSeq = await AsyncStorage.getItem('memberSeq');
 
-        if (accessToken) {
+        if (accessToken && memberSeq) {
           // 토큰이 존재하면 메인 페이지로 설정
           console.log('토큰 발견. 메인 페이지로 이동합니다.');
           setInitialUrl(`${BASE_URL}/page/academy/academySearch`); // 웹 프로젝트의 메인 페이지 경로
@@ -428,29 +431,84 @@ export const Home = (props: Props) => {
 
 
 
+  /**
+   * 재시도 핸들러
+   */
+  const handleRetry = () => {
+    setIsError(false);
+    setErrorDetails('');
+    webViewRef.current?.reload();
+  };
 
 
+  /**
+   * 웹뷰 로딩 실패 시 보여줄 화면을 렌더링하는 함수
+   */
+  const renderErrorView = (errorDomain: string | undefined, errorCode: number, errorDesc: string) => (
+      <View style={_styles.errorContainer}>
+        <Text style={_styles.errorText}>페이지를 불러올 수 없습니다.</Text>
+        <Text style={_styles.errorTextDetail}>네트워크 연결을 확인하거나 잠시 후 다시 시도해 주세요.</Text>
+
+        {null != errorDesc && errorDesc.length > 0 && (
+            <Text style={_styles.errorTextDetail}>({errorDesc})</Text>
+        )}
 
 
+        <TouchableOpacity
+            style={_styles.retryButton}
+            onPress={handleRetry}
+            activeOpacity={0.7} // 터치 시 투명도
+        >
+          <Text style={_styles.retryButtonText}>다시 시도</Text>
+        </TouchableOpacity>
+      </View>
+  );
 
 
   return (
     <>
       <View style={_styles.wrap}>
-        <WebView 
-          //source={{uri: 'https://naver.com'}}
-          source={{uri: initialUrl}}
-          ref={webViewRef}
-          onMessage={handleWebViewMessage}
-          onNavigationStateChange={(navState) => {
-            setCanGoBack(navState.canGoBack);
-          }}
-          onLoadEnd={() => {
-            SplashScreen.hide(); // 웹뷰 로딩이 끝나면 스플래시 화면을 숨깁니다.
-          }}
-          domStorageEnabled={true} // 웹사이트가 localStorage를 사용할 경우 필요
-          startInLoadingState={true} // 웹뷰 로딩 중 인디케이터 표시
-        />
+        {isError ? renderErrorView() : (
+            <WebView
+              //source={{uri: 'https://naver.com'}}
+              source={{uri: initialUrl}}
+              ref={webViewRef}
+              onMessage={handleWebViewMessage}
+              onNavigationStateChange={(navState) => {
+                setCanGoBack(navState.canGoBack);
+              }}
+              onLoadEnd={(syntheticEvent) => {
+                SplashScreen.hide(); // 웹뷰 로딩이 끝나면 스플래시 화면을 숨깁니다.
+                // 에러 없이 로딩 성공 시 에러 상태 초기화
+                if (!syntheticEvent.nativeEvent.loading) {
+                  console.log('성공!!!');
+                  setIsError(false);
+                }
+              }}
+              domStorageEnabled={true} // 웹사이트가 localStorage를 사용할 경우 필요
+              startInLoadingState={true} // 웹뷰 로딩 중 인디케이터 표시
+              onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView error: ', nativeEvent);
+                setErrorDetails(nativeEvent.description);
+                setIsError(true);
+              }}
+
+              onHttpError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn(
+                    'WebView HTTP error: ',
+                    nativeEvent.statusCode,
+                    nativeEvent.description
+                );
+                setErrorDetails(`${nativeEvent.statusCode} ${nativeEvent.description}`);
+                setIsError(true);
+              }}
+              // renderError는 onError 발생 시에만 동작하므로,
+              // isError 상태로 통합 관리하기 위해 직접 렌더링합니다.
+
+            />
+        )}
       </View>
     </>
   );
@@ -469,4 +527,44 @@ const _styles = StyleSheet.create({
     //height: height,
     backgroundColor: '#181818',
   },
+
+
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#181818',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  errorTextDetail: {
+    fontSize: 14,
+    color: '#555',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 40,
+  },
+  // 버튼 스타일 추가
+  retryButton: {
+    backgroundColor: '#007AFF', // 예시 색상 (iOS 기본 파란색)
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    elevation: 2, // 안드로이드 그림자 효과
+    shadowColor: '#000', // iOS 그림자 효과
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+
 });
