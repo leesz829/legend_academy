@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:734779292699:android:ed934718d5f5ab91894cbe",
+        "android_client_info": {
+          "package_name": "com.artcellar.legends_academy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCI_ve2nH6JhWslcRCu6cdmlX-vt6JVaCQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:734779292699:android:89e64014d1c364f4894cbe",
         "android_client_info": {
           "package_name": "com.legend_academy"

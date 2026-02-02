@@ -2,13 +2,14 @@ import { RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ColorType, ScreenNavigationProp, StackParamList } from '@types';
-import { Image, ScrollView, StyleSheet, View, Platform, BackHandler, useWindowDimensions, Alert, Text, TouchableOpacity } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, Platform, BackHandler, useWindowDimensions, Alert, Text, TouchableOpacity, PermissionsAndroid } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { WebViewNativeEvent } from 'react-native-webview/lib/WebViewTypes';
 import { HeaderBackButton } from '@react-navigation/elements';
 import SplashScreen from 'react-native-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
+import Geolocation from 'react-native-geolocation-service';
 
 
 
@@ -30,15 +31,18 @@ export const Home = (props: Props) => {
   const [isMainPage, setIsMainPage] = useState(false); // [추가] 메인 페이지 여부를 저장할 상태
   const [isError, setIsError] = useState(false); // 오류 상태를 관리할 state
   const [errorDetails, setErrorDetails] = useState(''); // 오류 상세 정보를 저장할 state
+  const [location, setLocation] = useState<{latitude: number; longitude: number} | null>(null);
 
   const navigation = useNavigation();
 
   // 1. 로딩 상태와 시작 URL을 관리할 state 추가
   const [isLoading, setIsLoading] = useState(true);
   const [initialUrl, setInitialUrl] = useState<string>(''); // 초기값을 빈 문자열로 변경
-  //const BASE_URL = 'http://221.146.13.175:9090';
+//  const BASE_URL = 'http://221.146.13.175:9090';
 //  const BASE_URL = 'http://10.0.0.1:9090';
-  const BASE_URL = 'http://49.50.131.78:8080';
+//  const BASE_URL = 'http://49.50.131.78:8080';
+//  const BASE_URL = 'http://221.146.13.175:5173';
+    const BASE_URL = 'http://49.50.131.78:9090';
 
   // 2. 앱 시작 시 토큰을 확인하여 시작 URL을 설정하는 useEffect
   useEffect(() => {
@@ -50,7 +54,8 @@ export const Home = (props: Props) => {
         if (accessToken && memberSeq) {
           // 토큰이 존재하면 메인 페이지로 설정
           console.log('토큰 발견. 메인 페이지로 이동합니다.');
-          setInitialUrl(`${BASE_URL}/page/academy/academySearch`); // 웹 프로젝트의 메인 페이지 경로
+          //setInitialUrl(`${BASE_URL}/page/academy/academySearch`); // 웹 프로젝트의 메인 페이지 경로
+            setInitialUrl(`${BASE_URL}/academy/academyList`); // 웹 프로젝트의 메인 페이지 경로
         } else {
           // 토큰이 없으면 로그인 페이지로 설정
           console.log('토큰 없음. 로그인 페이지로 이동합니다.');
@@ -67,6 +72,7 @@ export const Home = (props: Props) => {
     };
 
     checkTokenAndSetUrl();
+    getLocation();
   }, []); // 빈 배열을 전달하여 컴포넌트가 처음 마운트될 때 한번만 실행되도록 합니다.
 
 
@@ -118,12 +124,6 @@ export const Home = (props: Props) => {
   }, [navigation, canGoBack, handleBackPress]);
 
 
-  /*useEffect(() => {
-    console.log('canGoBac1111111k !!!!!!!!!!!!!!!');
-
-  }, []);*/
-
-
 
 
   async function getAccessToken() {
@@ -133,6 +133,84 @@ export const Home = (props: Props) => {
 
 
 
+  /* #########################################################################################################
+  * 위치 추출 관련
+  ######################################################################################################### */
+
+  // Android 권한 요청
+  const requestAndroidPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: '위치 정보 접근 권한',
+            message: '현재 위치 정보를 가져오기 위해 권한이 필요합니다.',
+            buttonNeutral: '나중에',
+            buttonNegative: '거부',
+            buttonPositive: '허용',
+          },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        return true;
+      } else {
+        Alert.alert('위치 권한이 거부되었습니다.');
+        return false;
+      }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
+
+  const getLocation = async () => {
+    let hasPermission = false;
+    //setLoading(true);
+    setLocation(null);
+
+    // 1. 플랫폼에 맞는 권한 요청
+    if (Platform.OS === 'ios') {
+      //hasPermission = await requestIOSPermission();
+    } else if (Platform.OS === 'android') {
+      hasPermission = await requestAndroidPermission();
+    }
+
+    if (!hasPermission) {
+      //setLoading(false);
+      return;
+    }
+
+    // 2. 권한이 있으면 위치 정보 가져오기
+    Geolocation.getCurrentPosition(
+        async position => {
+          const { latitude, longitude } = position.coords;
+          const newLocation = { latitude, longitude }; // 객체로 묶기
+          setLocation(newLocation);
+          //setLoading(false);
+          console.log(latitude, longitude);
+
+          //Alert.alert(newLocation.longitude.toString(), newLocation.latitude.toString());
+
+          const locationString = JSON.stringify(newLocation);
+          await AsyncStorage.setItem('userLocation', locationString);
+
+          /*if (webViewRef.current) {
+            const message = JSON.stringify({
+              type: 'SET_LOCATION', // 메시지 타입을 지정하여 웹에서 구분하기 쉽게 함
+              payload: newLocation,
+            });
+            webViewRef.current.postMessage(message);
+            console.log('위치 정보를 웹뷰로 전송했습니다:', message);
+          }*/
+        },
+        error => {
+          // See error code charts below.
+          console.log(error.code, error.message);
+          Alert.alert('위치 정보를 가져오는 데 실패했습니다.');
+          //setLoading(false);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+    );
+  };
 
 
 
@@ -162,7 +240,7 @@ export const Home = (props: Props) => {
    * 웹뷰로부터 메시지를 수신했을 때 실행되는 핸들러 함수
    */
   const handleWebViewMessage = async (event: WebViewMessageEvent) => {
-    //console.log('handleWebViewMessage', event);
+    console.log('handleWebViewMessage', event);
     // 1. 웹뷰에서 온 데이터(문자열)를 파싱합니다.
     //    안전하게 처리하기 위해 JSON.parse를 사용하고, try-catch로 감싸는 것이 좋습니다.
     let data;
@@ -214,7 +292,11 @@ export const Home = (props: Props) => {
 
           // ###################################################### STORAGE 추출
         case 'GET_STORAGE': {
-          const {key} = data.payload;
+          const { key } = data.payload;
+          const requestId = data.requestId;
+
+          console.log('key :::: ' , key);
+            console.log('requestId :::: ' , requestId);
 
           if (!key) {
             console.error('GET_DATA: 키가 누락되었습니다.');
@@ -241,8 +323,10 @@ export const Home = (props: Props) => {
               const response = {
                 type: 'DATA_RESPONSE',
                 key: key, // 어떤 키에 대한 응답인지 알려주면 좋습니다.
+                requestId: requestId,
                 payload: valueToSend,
               };
+              console.log('response ::: ' , response);
               webViewRef.current.postMessage(JSON.stringify(response));
             }
 
@@ -367,7 +451,7 @@ export const Home = (props: Props) => {
       includeBase64: true, // Base64 문자열 포함 (핵심)
       maxWidth: 400,
       maxHeight: 400,
-      quality: 0.1,        // 이미지 품질을 70%로 설정 (0.0 ~ 1.0)
+      quality: 0.7,        // 이미지 품질을 70%로 설정 (0.0 ~ 1.0)
     };
 
     // 이미지 라이브러리(갤러리) 실행
