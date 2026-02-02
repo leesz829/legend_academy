@@ -557,10 +557,12 @@ export const Home = (props: Props) => {
               //source={{uri: 'https://naver.com'}}
               source={{uri: initialUrl}}
               ref={webViewRef}
+              //useWebkit={true}
               onMessage={handleWebViewMessage}
               onNavigationStateChange={(navState) => {
                 setCanGoBack(navState.canGoBack);
               }}
+              //originWhitelist={['*']}
               onLoadEnd={(syntheticEvent) => {
                 SplashScreen.hide(); // 웹뷰 로딩이 끝나면 스플래시 화면을 숨깁니다.
                 // 에러 없이 로딩 성공 시 에러 상태 초기화
