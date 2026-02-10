@@ -67,7 +67,7 @@ export const Home = (props: Props) => {
                     // 토큰이 존재하면 메인 페이지로 설정
                     console.log('토큰 발견. 메인 페이지로 이동합니다.');
                     //setInitialUrl(`${BASE_URL}/page/academy/academySearch`); // 웹 프로젝트의 메인 페이지 경로
-                    setInitialUrl(`${BASE_URL}/academy/academyList`); // 웹 프로젝트의 메인 페이지 경로
+                    setInitialUrl(`${BASE_URL}`); // 웹 프로젝트의 메인 페이지 경로
                 } else {
                     // 토큰이 없으면 로그인 페이지로 설정
                     console.log('토큰 없음. 로그인 페이지로 이동합니다.');
