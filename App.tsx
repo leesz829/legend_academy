@@ -18,60 +18,84 @@ import MainNaviagtion from './src/navigation/MainNaviagtion';
 import store from 'redux/store';
 import { enableScreens } from 'react-native-screens';
 import SplashScreen from 'react-native-splash-screen'; // 추가
+import { getFCMToken } from './src/utils/FCM/getFCMToken';
+import {
+    registerForegroundHandler,
+    registerBackgroundHandler,
+} from './src/utils/FCM/pushNotification';
+import { setNavigationRef } from './src/utils/FCM/deepLinkRouter';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 type SectionProps = PropsWithChildren<{
-  title: string;
+    title: string;
 }>;
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+    const isDarkMode = useColorScheme() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+    const backgroundStyle = {
+        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    };
 
-  React.useEffect(() => {
-    // 필요한 로딩 작업(데이터 fetching 등)이 끝난 후 스플래시를 숨깁니다.
-    // 여기서는 간단히 앱이 마운트되면 바로 숨기도록 처리합니다.
-    // SplashScreen.hide();
-  }, []);
+    React.useEffect(() => {
+        // 필요한 로딩 작업(데이터 fetching 등)이 끝난 후 스플래시를 숨깁니다.
+        // 여기서는 간단히 앱이 마운트되면 바로 숨기도록 처리합니다.
+        // SplashScreen.hide();
 
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Provider store={store}>
-        <SafeAreaProvider>
-          <StatusBar
-            animated={true}
-            barStyle="dark-content"
-            backgroundColor="white"
-          />
-          <NavigationContainer>
-            <MainNaviagtion />
-          </NavigationContainer>
-        </SafeAreaProvider>
-      </Provider>
-    </GestureHandlerRootView>
-  );
+        // FCM 토큰 발급
+        const initFCM = async () => {
+            const token = await getFCMToken();
+            if (token) {
+                try {
+                    await AsyncStorage.setItem('fcmToken', token);
+                    console.log('[App] FCM 토큰 저장 완료:', token);
+                    // TODO: 서버에 토큰 등록 API 호출
+                } catch (e) {
+                    console.error('[App] FCM 토큰 저장 실패:', e);
+                }
+            }
+        };
+
+        initFCM();
+
+    }, []);
+
+    return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <Provider store={store}>
+                <SafeAreaProvider>
+                    <StatusBar
+                        animated={true}
+                        barStyle="dark-content"
+                        backgroundColor="white"
+                    />
+                    <NavigationContainer>
+                        <MainNaviagtion />
+                    </NavigationContainer>
+                </SafeAreaProvider>
+            </Provider>
+        </GestureHandlerRootView>
+    );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+    sectionContainer: {
+        marginTop: 32,
+        paddingHorizontal: 24,
+    },
+    sectionTitle: {
+        fontSize: 24,
+        fontWeight: '600',
+    },
+    sectionDescription: {
+        marginTop: 8,
+        fontSize: 18,
+        fontWeight: '400',
+    },
+    highlight: {
+        fontWeight: '700',
+    },
 });
 
 export default App;

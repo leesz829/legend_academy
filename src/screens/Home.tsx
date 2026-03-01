@@ -10,7 +10,10 @@ import SplashScreen from 'react-native-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
 import Geolocation from 'react-native-geolocation-service';
-
+import {
+    registerForegroundHandler,
+    registerBackgroundHandler,
+} from '../utils/FCM/pushNotification';
 
 
 /* ################################################################################################################
@@ -85,6 +88,18 @@ export const Home = (props: Props) => {
 
         checkTokenAndSetUrl();
         getLocation();
+
+        // FCM 포그라운드 핸들러 등록 (webViewRef 전달)
+        const unsubscribeForeground = registerForegroundHandler(webViewRef);
+
+        // FCM 백그라운드/종료 핸들러 등록 (webViewRef 전달)
+        registerBackgroundHandler(webViewRef);
+
+        return () => {
+            unsubscribeForeground();
+        };
+
+
     }, []); // 빈 배열을 전달하여 컴포넌트가 처음 마운트될 때 한번만 실행되도록 합니다.
 
 
@@ -356,6 +371,24 @@ export const Home = (props: Props) => {
 
                     } else {
                         console.error('페이로드에 토큰이 누락되었습니다.');
+                    }
+                    break;
+                }
+
+                // ###################################################### 스토리지 삭제
+                case 'REMOVE_STORAGE': {
+                    const { key } = data.payload;
+
+                    if(!key) {
+                        console.error('REMOVE_STORAGE: 키가 누락되었습니다.');
+                        return;
+                    }
+
+                    try {
+                        await AsyncStorage.removeItem(key);
+
+                    } catch (e) {
+                        console.error(`데이터 저장 실패 (key: ${key}):`, e);
                     }
                     break;
                 }

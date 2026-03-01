@@ -1,63 +1,24 @@
-import { Alert, Linking } from 'react-native';
-import { parse as URLParse } from 'ale-url-parser';
-// import * as RootNavigation from '@navigator/navigation';
+import { NavigationContainerRef } from '@react-navigation/native';
 
-export const deepLinkRoutes = {
-	// home: () => RootNavigation.navigate('Home'),
-	// // pointing://notice/237
-	// notice: ([serial]) => RootNavigation.navigate('NoticeView', { serial }),
-	// event: ([serial]) => RootNavigation.navigate('EventView', { serial }),
-	// payment: ([paymentState, serial]) => {
-	//   RootNavigation.navigate('Receipt', { serial });
-	// },
-	// charge: (queries) => {
-	//   const serial = queries?.[0];
-	//   RootNavigation.navigate('ChargePoint', { serial });
-	// },
-	// receipt: ([transaction_type, transaction_serial]) => {
-	//   RootNavigation.navigate('TransactionReceipt', {
-	//     transaction_type,
-	//     transaction_serial,
-	//   });
-	// },
-	// ['self-charge']: ([coupon], query) => {
-	//   RootNavigation.navigate('PaymentsCard', { coupon });
-	// },
-	// brand: ([serial]) => {
-	//   RootNavigation.navigate('NewPayment', { serial });
-	// },
-	// transactions: () => {
-	//   RootNavigation.navigate('TransactionList');
-	// },
-	// ['dev-login']: () => {
-	//   RootNavigation.navigate('HiddenAppleBypass');
-	// },
-	// url: ([], query) => {
-	//   // pointing://url?url=https://github.com
-	//   console.log(query?.url);
-	//   Linking.openURL(query?.url);
-	// },
+let navigationRef: NavigationContainerRef<any> | null = null;
+
+export const setNavigationRef = (ref: NavigationContainerRef<any>) => {
+    navigationRef = ref;
 };
 
-export const navigateWithDeepLinkURL = (url, callback) => {
-	const { host, path = [], query = {} } = URLParse(url);
+/**
+ * 알림의 data payload에서 이동할 화면을 파싱하여 네비게이트합니다.
+ */
+export const deepLinkRouter = (data: Record<string, any>) => {
+    if (!navigationRef) {
+        console.warn('[deepLinkRouter] navigationRef가 설정되지 않았습니다.');
+        return;
+    }
 
-	const route = Object.keys(deepLinkRoutes).find((key) => key === host);
+    const screen = data?.screen;
+    const params = data?.params ? JSON.parse(data.params) : {};
 
-	console.log(url);
-
-	if (route) {
-		try {
-			console.log(route);
-			deepLinkRoutes?.[route](path, query);
-			if (callback) {
-				callback();
-			}
-		} catch (error) {
-			console.log('error', error);
-			Alert.alert('올바른 링크가 아니에요! 🙅');
-		}
-		return;
-	}
-	Alert.alert('존재하지 않는 경로에요! 😖');
+    if (screen) {
+        navigationRef.navigate(screen as never, params as never);
+    }
 };

@@ -6,6 +6,8 @@ import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import org.devio.rn.splashscreen.SplashScreen // 추가
+import io.invertase.notifee.NotifeePackage
+
 
 class MainActivity : ReactActivity() {
 
