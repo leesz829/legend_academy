@@ -2,7 +2,7 @@ import { RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ColorType, ScreenNavigationProp, StackParamList } from '@types';
-import { Image, ScrollView, StyleSheet, View, Platform, BackHandler, useWindowDimensions, Alert, Text, TouchableOpacity, PermissionsAndroid } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, Platform, BackHandler, useWindowDimensions, Alert, Text, TouchableOpacity, PermissionsAndroid, Linking } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import { WebViewNativeEvent } from 'react-native-webview/lib/WebViewTypes';
 import { HeaderBackButton } from '@react-navigation/elements';
@@ -456,6 +456,19 @@ export const Home = (props: Props) => {
                     console.log('EXIT_APP!!!!!!!!!!!!!!!');
 
                     //BackHandler.exitApp();
+                    break;
+                }
+
+                // ###################################################### 링크 열기
+                case 'OPEN_URL': {
+                    const { url } = data.payload;
+                    Linking.openURL(url);
+                    /*Linking.canOpenURL(url).then(supported => {
+                        if (supported) {
+                            console.log('123');
+                            Linking.openURL(url);
+                        }
+                    });*/
                     break;
                 }
 
