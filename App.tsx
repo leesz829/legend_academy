@@ -15,7 +15,7 @@ import { Provider, useDispatch } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import MainNaviagtion from './src/navigation/MainNaviagtion';
-import store from 'redux/store';
+import store from './src/redux/store';
 import { enableScreens } from 'react-native-screens';
 import SplashScreen from 'react-native-splash-screen'; // 추가
 import { getFCMToken } from './src/utils/FCM/getFCMToken';
