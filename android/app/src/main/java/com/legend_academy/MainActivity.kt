@@ -1,4 +1,4 @@
-package com.artcellar.legends_academy
+package com.artcellar.legendsacademy
 
 import android.os.Bundle // 추가
 import com.facebook.react.ReactActivity
@@ -24,7 +24,7 @@ class MainActivity : ReactActivity() {
      * Returns the name of the main component registered from JavaScript. This is used to schedule
      * rendering of the component.
      */
-    override fun getMainComponentName(): String = "legends_academy"
+    override fun getMainComponentName(): String = "legendsacademy"
 
     /**
      * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]

@@ -46,7 +46,8 @@ export const Home = (props: Props) => {
 //  const BASE_URL = 'http://49.50.131.78:8080';
 //  const BASE_URL = 'http://221.146.13.175:5173';
 //  const BASE_URL = 'http://49.50.131.78:9090'; // 운영
-    const BASE_URL = 'http://49.50.131.78:5173'; // 개발
+//    const BASE_URL = 'http://49.50.131.78:5173'; // 개발
+    const BASE_URL = 'https://api.korealegendsacademy.xyz'; // 운영 SSL
 
 
     // 뷰포트 설정을 강제로 덮어쓰는 스크립트
@@ -455,7 +456,7 @@ export const Home = (props: Props) => {
                 case 'EXIT_APP': {
                     console.log('EXIT_APP!!!!!!!!!!!!!!!');
 
-                    //BackHandler.exitApp();
+                    BackHandler.exitApp();
                     break;
                 }
 

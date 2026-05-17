@@ -1,4 +1,4 @@
-package com.artcellar.legends_academy
+package com.artcellar.legendsacademy
 
 import android.app.Application
 import com.facebook.react.PackageList

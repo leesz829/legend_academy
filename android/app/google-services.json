@@ -26,9 +26,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:734779292699:android:89e64014d1c364f4894cbe",
+        "mobilesdk_app_id": "1:734779292699:android:36bbd5eb5d5f4e46894cbe",
         "android_client_info": {
-          "package_name": "com.legend_academy"
+          "package_name": "com.artcellar.legendsacademy"
         }
       },
       "oauth_client": [],
