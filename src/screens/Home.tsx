@@ -44,10 +44,10 @@ export const Home = (props: Props) => {
 //  const BASE_URL = 'http://221.146.13.175:9090';
 //  const BASE_URL = 'http://10.0.0.1:9090';
 //  const BASE_URL = 'http://49.50.131.78:8080';
-//  const BASE_URL = 'http://221.146.13.175:5173';
+  const BASE_URL = 'http://221.146.13.175:5173';
 //  const BASE_URL = 'http://49.50.131.78:9090'; // 운영
-//    const BASE_URL = 'http://49.50.131.78:5173'; // 개발
-    const BASE_URL = 'https://api.korealegendsacademy.xyz'; // 운영 SSL
+//  const BASE_URL = 'http://49.50.131.78:5173'; // 개발
+//    const BASE_URL = 'https://api.korealegendsacademy.xyz'; // 운영 SSL
 
 
     // 뷰포트 설정을 강제로 덮어쓰는 스크립트
@@ -588,12 +588,150 @@ export const Home = (props: Props) => {
     );
 
 
+    const isHttpUrl = (url: string) => {
+        return (
+            url.startsWith('http://') ||
+            url.startsWith('https://') ||
+            url.startsWith('about:blank')
+        );
+    }
+
+    // 안드로이드 intent URL 파싱 함수 추가
+    const parseIntentUrl = (intentUrl: string) => {
+        const customScheme = intentUrl.split('intent://')[1]?.split('#Intent')[0];
+        const intentParts = intentUrl.split('#Intent;')[1]?.split(';');
+
+        let packageName = '';
+        let fallbackUrl = '';
+        let appLink = '';
+
+        if (intentParts) {
+            for (const part of intentParts) {
+                if (part.startsWith('package=')) {
+                    packageName = part.replace('package=', '');
+                } else if (part.startsWith('S.browser_fallback_url=')) {
+                    fallbackUrl = decodeURIComponent(part.replace('S.browser_fallback_url=', ''));
+                }
+            }
+        }
+
+        if (customScheme) {
+            appLink = `${customScheme}://`;
+        }
+
+        return { appLink, packageName, fallbackUrl };
+    };
+
+    function parseIntentUrl02(url: string) {
+        const intentIndex = url.indexOf('#Intent;');
+
+        if (intentIndex === -1) {
+            return {
+                appLink: url,
+                packageName: undefined,
+                fallbackUrl: undefined,
+            };
+        }
+
+        const intentPrefix = url.substring(0, intentIndex); // intent://... or intent:kbbank://...
+        const intentBody = url.substring(intentIndex);
+
+        const scheme = intentBody.match(/;scheme=([^;]+)/)?.[1];
+        const packageName = intentBody.match(/;package=([^;]+)/)?.[1];
+        const fallbackUrl = intentBody.match(/;S\.browser_fallback_url=([^;]+)/)?.[1];
+
+        let appLink = intentPrefix.replace(/^intent:/, '');
+
+        // intent://xxx + scheme=kbbank => kbbank://xxx
+        if (scheme && appLink.startsWith('//')) {
+            appLink = `${scheme}:${appLink}`;
+        }
+
+        return {
+            appLink,
+            packageName,
+            fallbackUrl: fallbackUrl ? decodeURIComponent(fallbackUrl) : undefined,
+        };
+    }
+
+    // iOS에서 앱이 미설치된 경우 앱스토어로 보내기 위한 스킴-앱스토어 URL 매핑 함수
+    const openAppStoreForIOS = (url: string) => {
+        let appStoreUrl = '';
+        if (url.startsWith('ispmobile://')) appStoreUrl = 'https://apps.apple.com/kr/app/id369125087'; // 페이북/ISP
+        else if (url.startsWith('shinhan-sr-ansimclick://')) appStoreUrl = 'https://apps.apple.com/kr/app/id572462317'; // 신한카드
+        else if (url.startsWith('kb-acp://')) appStoreUrl = 'https://apps.apple.com/kr/app/id692700371'; // KB국민카드
+        else if (url.startsWith('hdcardappcardansimclick://')) appStoreUrl = 'https://apps.apple.com/kr/app/id702653088'; // 현대카드
+        else if (url.startsWith('lotteappcard://')) appStoreUrl = 'https://apps.apple.com/kr/app/id688047200'; // 롯데카드
+        else if (url.startsWith('mpocket.online.ansimclick://')) appStoreUrl = 'https://apps.apple.com/kr/app/id535125356'; // 삼성카드
+        else if (url.startsWith('cloudpay://')) appStoreUrl = 'https://apps.apple.com/kr/app/id847268987'; // 하나카드
+        else if (url.startsWith('citimobileapp://')) appStoreUrl = 'https://apps.apple.com/kr/app/id1179759666'; // 씨티은행
+        else if (url.startsWith('payco://')) appStoreUrl = 'https://apps.apple.com/kr/app/id924292102'; // 페이코
+        else if (url.startsWith('kakaotalk://')) appStoreUrl = 'https://apps.apple.com/kr/app/id362057947'; // 카카오톡
+        else if (url.startsWith('tauthlink://')) appStoreUrl = 'https://apps.apple.com/kr/app/id456053822'; // PASS(SKT)
+        else if (url.startsWith('ktauthexecute://')) appStoreUrl = 'https://apps.apple.com/kr/app/id1141258031'; // PASS(KT)
+        else if (url.startsWith('upluscorporation://')) appStoreUrl = 'https://apps.apple.com/kr/app/id1147394645'; // PASS(LGU+)
+        else if (url.startsWith('vguardstart://')) appStoreUrl = 'https://apps.apple.com/kr/app/id436688081'; // V-Guard
+
+        if (appStoreUrl) {
+            Linking.openURL(appStoreUrl).catch(() => {});
+        }
+    };
+
+    const openExternalUrl = async (rawUrl: string) => {
+        try {
+            // Android intent:// 처리
+            if (Platform.OS === 'android' && rawUrl.startsWith('intent:')) {
+                const { appLink, packageName, fallbackUrl } = parseIntentUrl02(rawUrl);
+
+                try {
+                    await Linking.openURL(appLink);
+                    return;
+                } catch (e) {
+                    // 앱이 없으면 fallback 또는 Play Store 이동
+                    if (fallbackUrl) {
+                        await Linking.openURL(fallbackUrl);
+                        return;
+                    }
+
+                    if (packageName) {
+                        try {
+                            await Linking.openURL(`market://details?id=${packageName}`);
+                        } catch {
+                            await Linking.openURL(
+                                `https://play.google.com/store/apps/details?id=${packageName}`,
+                            );
+                        }
+                        return;
+                    }
+                }
+
+                return;
+            }
+
+            if (Platform.OS === 'ios') {
+                try {
+                    await Linking.openURL(rawUrl);
+                } catch (err) {
+                    console.log('iOS 외부앱 실행 실패 (앱 미설치 등), 앱스토어로 이동 시도:', rawUrl);
+                    openAppStoreForIOS(rawUrl);
+                }
+            } else {
+                await Linking.openURL(rawUrl);
+            }
+
+            // kb-acp://, kbbank://, ispmobile://, shinhan-sr-ansimclick:// 등
+            //await Linking.openURL(rawUrl);
+        } catch (e) {
+            console.log('외부앱 실행 실패:', rawUrl, e);
+        }
+    }
+
+
     return (
     <>
         <View style={_styles.wrap}>
             {isError ? renderErrorView() : (
                 <WebView
-                    //source={{uri: 'https://naver.com'}}
                     source={{uri: initialUrl}}
                     injectedJavaScript={disableZoomScript}
                     ref={webViewRef}
@@ -602,7 +740,9 @@ export const Home = (props: Props) => {
                     onNavigationStateChange={(navState) => {
                         setCanGoBack(navState.canGoBack);
                     }}
-                    //originWhitelist={['*']}
+                    originWhitelist={['*']}
+                    setSupportMultipleWindows={true} // 다중 창(팝업) 허용 (PG 결제 필수)
+                    javaScriptCanOpenWindowsAutomatically={true} // 자바스크립트 새창 띄우기 허용
                     onLoadEnd={(syntheticEvent) => {
                         SplashScreen.hide(); // 웹뷰 로딩이 끝나면 스플래시 화면을 숨깁니다.
                         // 에러 없이 로딩 성공 시 에러 상태 초기화
@@ -619,20 +759,46 @@ export const Home = (props: Props) => {
                         setErrorDetails(nativeEvent.description);
                         setIsError(true);
                     }}
-
                     onHttpError={(syntheticEvent) => {
                         const { nativeEvent } = syntheticEvent;
-                        console.warn(
-                            'WebView HTTP error: ',
-                            nativeEvent.statusCode,
-                            nativeEvent.description
-                        );
+                        console.warn('WebView HTTP error: ',nativeEvent.statusCode,nativeEvent.description);
                         setErrorDetails(`${nativeEvent.statusCode} ${nativeEvent.description}`);
                         setIsError(true);
                     }}
                     scalesPageToFit={false} // 사용자의 핀치 줌(손가락 벌려 확대)도 막고 싶다면 아래 속성 추가
-                    // renderError는 onError 발생 시에만 동작하므로,
-                    // isError 상태로 통합 관리하기 위해 직접 렌더링합니다.
+                    onShouldStartLoadWithRequest={(request) => {
+                        const url = request.url;
+
+                        console.log('PAYMENT_WEBVIEW_URL:', url);
+
+                        if (!url) return true;
+
+                        // 일반 웹 URL은 WebView에서 계속 진행
+                        if (isHttpUrl(url)) {
+                          return true;
+                        }
+
+                        // 앱스킴 / intent / market 등은 외부앱 실행
+                        openExternalUrl(url);
+
+                        // WebView가 직접 로드하지 못하게 막음
+                        return false;
+                    }}
+                    onOpenWindow={(event) => {
+                        const targetUrl = event.nativeEvent.targetUrl;
+                        console.log('PAYMENT_OPEN_WINDOW:', targetUrl);
+
+                        if (!targetUrl) return;
+
+                        if (isHttpUrl(targetUrl)) {
+                            webViewRef.current?.injectJavaScript(`
+                                window.location.href = ${JSON.stringify(targetUrl)};
+                                true;
+                            `);
+                        } else {
+                            openExternalUrl(targetUrl);
+                        }
+                    }}
                 />
             )}
         </View>
