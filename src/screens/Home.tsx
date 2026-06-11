@@ -762,7 +762,7 @@ export const Home = (props: Props) => {
 
                         // 현재 URL이 이니시스(inicis) 또는 특정 결제 모듈 키워드를 포함하는지 확인
                         const currentUrl = navState.url || '';
-                        if (currentUrl.includes('inicis') || currentUrl.includes('pay') || currentUrl.includes('kcp')) {
+                        if (currentUrl.includes('inicis') || currentUrl.includes('kcp')) {
                             setIsPaymentPage(true);
                         } else {
                             setIsPaymentPage(false);
