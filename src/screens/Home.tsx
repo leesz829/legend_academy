@@ -10,6 +10,7 @@ import SplashScreen from 'react-native-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
 import Geolocation from 'react-native-geolocation-service';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     registerForegroundHandler,
     registerBackgroundHandler,
@@ -729,7 +730,9 @@ export const Home = (props: Props) => {
 
     return (
     <>
-        <View style={_styles.wrap}>
+
+        <SafeAreaView style={_styles.wrap} edges={['top']}>
+        {/*<View style={_styles.wrap}>*/}
             {isError ? renderErrorView() : (
                 <WebView
                     source={{uri: initialUrl}}
@@ -801,7 +804,8 @@ export const Home = (props: Props) => {
                     }}
                 />
             )}
-        </View>
+        {/*</View>*/}
+        </SafeAreaView>
         </>
     );
 };
