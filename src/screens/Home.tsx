@@ -17,6 +17,7 @@ import {
 } from '../utils/FCM/pushNotification';
 
 
+
 /* ################################################################################################################
 ###### 서비스 정책 화면
 ################################################################################################################### */
@@ -32,7 +33,8 @@ export const Home = (props: Props) => {
     const webViewRef= useRef<WebView>(null);
     const [navState, setNavState] = useState<WebViewNativeEvent>();
     const [canGoBack, setCanGoBack] = useState(false);
-    const [isMainPage, setIsMainPage] = useState(false); // [추가] 메인 페이지 여부를 저장할 상태
+    const [isMainPage, setIsMainPage] = useState(false); // 메인 페이지 여부를 저장할 상태
+    const [isPaymentPage, setIsPaymentPage] = useState(false); // 결제 페이지 여부 상태
     const [isError, setIsError] = useState(false); // 오류 상태를 관리할 state
     const [errorDetails, setErrorDetails] = useState(''); // 오류 상세 정보를 저장할 state
     const [location, setLocation] = useState<{latitude: number; longitude: number} | null>(null);
@@ -733,6 +735,21 @@ export const Home = (props: Props) => {
 
         <SafeAreaView style={_styles.wrap} edges={['top']}>
         {/*<View style={_styles.wrap}>*/}
+
+            {/* 뒤로가기 커스텀 헤더 영역 추가 */}
+            {canGoBack && isPaymentPage && (
+                <View style={_styles.customHeader}>
+                    <TouchableOpacity style={_styles.backButton} onPress={handleBackPress}>
+                        <Image
+                            source={require('assets/icon/back_icon_white.png')}
+                            style={_styles.backIcon}
+                            resizeMode="contain"
+                        />
+                        <Text style={_styles.backButtonText}>{"결제"}</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             {isError ? renderErrorView() : (
                 <WebView
                     source={{uri: initialUrl}}
@@ -742,6 +759,14 @@ export const Home = (props: Props) => {
                     onMessage={handleWebViewMessage}
                     onNavigationStateChange={(navState) => {
                         setCanGoBack(navState.canGoBack);
+
+                        // 현재 URL이 이니시스(inicis) 또는 특정 결제 모듈 키워드를 포함하는지 확인
+                        const currentUrl = navState.url || '';
+                        if (currentUrl.includes('inicis') || currentUrl.includes('pay') || currentUrl.includes('kcp')) {
+                            setIsPaymentPage(true);
+                        } else {
+                            setIsPaymentPage(false);
+                        }
                     }}
                     originWhitelist={['*']}
                     setSupportMultipleWindows={true} // 다중 창(팝업) 허용 (PG 결제 필수)
@@ -818,49 +843,74 @@ export const Home = (props: Props) => {
 ###########################################################################################################
 ####################################################################################################### */}
 const _styles = StyleSheet.create({
-  wrap: {
-    flex: 1,
-    //height: height,
-    backgroundColor: '#181818',
-  },
+    wrap: {
+        flex: 1,
+        //height: height,
+        backgroundColor: '#181818',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#181818',
+    },
+    errorText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginBottom: 20,
+    },
+    errorTextDetail: {
+        fontSize: 14,
+        color: '#555',
+        textAlign: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 40,
+    },
+    // 버튼 스타일 추가
+    retryButton: {
+        backgroundColor: '#007AFF', // 예시 색상 (iOS 기본 파란색)
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 8,
+        elevation: 2, // 안드로이드 그림자 효과
+        shadowColor: '#000', // iOS 그림자 효과
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1,
+    },
+    retryButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 
-
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#181818',
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 20,
-  },
-  errorTextDetail: {
-    fontSize: 14,
-    color: '#555',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 40,
-  },
-  // 버튼 스타일 추가
-  retryButton: {
-    backgroundColor: '#007AFF', // 예시 색상 (iOS 기본 파란색)
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    elevation: 2, // 안드로이드 그림자 효과
-    shadowColor: '#000', // iOS 그림자 효과
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+    customHeader: {
+        height: 50,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        paddingHorizontal: 15,
+    },
+    backButton: {
+        //paddingVertical: 10,
+        paddingHorizontal: 5,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+    },
+    backIcon: {
+        width: 30,
+        height: 30,
+        //tintColor: '#333', // 필요하다면 흰색 아이콘을 어두운 색으로 덮어씌움 (디자인에 맞게 제거 가능)
+    },
+    backButtonText: {
+        fontSize: 15,
+        color: '#333',
+        fontWeight: 'bold',
+        marginLeft: 5,
+    },
 
 
 });
