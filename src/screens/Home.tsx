@@ -762,7 +762,14 @@ export const Home = (props: Props) => {
 
                         // 현재 URL이 이니시스(inicis) 또는 특정 결제 모듈 키워드를 포함하는지 확인
                         const currentUrl = navState.url || '';
-                        if (currentUrl.includes('inicis') || currentUrl.includes('kcp')) {
+
+                        // 외부 링크인지 확인
+                        const isExternalHttp = !currentUrl.startsWith(BASE_URL) && currentUrl.startsWith('http');
+                        // 결제 헤더를 띄우지 않을 예외 키워드 (나이스 인증, 유튜브 등)
+                        const isExcluded = currentUrl.includes('nice') || currentUrl.includes('youtube.com') || currentUrl.includes('youtu.be');
+
+                        //if (currentUrl.includes('inicis') || currentUrl.includes('kcp')) {
+                        if (isExternalHttp && !isExcluded) {
                             setIsPaymentPage(true);
                         } else {
                             setIsPaymentPage(false);
