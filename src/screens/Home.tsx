@@ -659,7 +659,7 @@ export const Home = (props: Props) => {
 
     // iOS에서 앱이 미설치된 경우 앱스토어로 보내기 위한 스킴-앱스토어 URL 매핑 함수
     const openAppStoreForIOS = (url: string) => {
-        let appStoreUrl = '';
+        /*let appStoreUrl = '';
         if (url.startsWith('ispmobile://')) appStoreUrl = 'https://apps.apple.com/kr/app/id369125087'; // 페이북/ISP
         else if (url.startsWith('shinhan-sr-ansimclick://')) appStoreUrl = 'https://apps.apple.com/kr/app/id572462317'; // 신한카드
         else if (url.startsWith('kb-acp://')) appStoreUrl = 'https://apps.apple.com/kr/app/id692700371'; // KB국민카드
@@ -677,6 +677,44 @@ export const Home = (props: Props) => {
 
         if (appStoreUrl) {
             Linking.openURL(appStoreUrl).catch(() => {});
+        }*/
+
+        // 자주 사용되는 국내 결제/은행 앱 매핑 객체
+        const appStoreMap: { [key: string]: string } = {
+            'ispmobile://': 'https://apps.apple.com/kr/app/id369125087', // 페이북/ISP
+            'shinhan-sr-ansimclick://': 'https://apps.apple.com/kr/app/id572462317', // 신한카드
+            'kb-acp://': 'https://apps.apple.com/kr/app/id692700371', // KB국민카드
+            'hdcardappcardansimclick://': 'https://apps.apple.com/kr/app/id702653088', // 현대카드
+            'lotteappcard://': 'https://apps.apple.com/kr/app/id688047200', // 롯데카드
+            'mpocket.online.ansimclick://': 'https://apps.apple.com/kr/app/id535125356', // 삼성카드
+            'cloudpay://': 'https://apps.apple.com/kr/app/id847268987', // 하나카드
+            'hanawallet://': 'https://apps.apple.com/kr/app/id1036652111', // 하나원큐페이
+            'citimobileapp://': 'https://apps.apple.com/kr/app/id1179759666', // 씨티은행
+            'payco://': 'https://apps.apple.com/kr/app/id924292102', // 페이코
+            'kakaotalk://': 'https://apps.apple.com/kr/app/id362057947', // 카카오톡
+            'tauthlink://': 'https://apps.apple.com/kr/app/id456053822', // PASS(SKT)
+            'ktauthexecute://': 'https://apps.apple.com/kr/app/id1141258031', // PASS(KT)
+            'upluscorporation://': 'https://apps.apple.com/kr/app/id1147394645', // PASS(LGU+)
+            'vguardstart://': 'https://apps.apple.com/kr/app/id436688081', // V-Guard
+            'supertoss://': 'https://apps.apple.com/kr/app/id839333328', // 토스
+            'nhappcardansimclick://': 'https://apps.apple.com/kr/app/id698023004', // NH농협카드
+            'nhallonepayansimclick://': 'https://apps.apple.com/kr/app/id1177889176', // NH올원페이
+            'wooripay://': 'https://apps.apple.com/kr/app/id1201113419', // 우리페이
+            'kbbank://': 'https://apps.apple.com/kr/app/id373733229', // KB스타뱅킹
+            'shinhansol://': 'https://apps.apple.com/kr/app/id349276602', // 신한 쏠
+            'newsmartpib://': 'https://apps.apple.com/kr/app/id1470181651', // 우리WON뱅킹
+            'naversearchapp://': 'https://apps.apple.com/kr/app/id393499958', // 네이버
+            'ukbanksmartbanknonloginpay://': 'https://apps.apple.com/kr/app/id1141381308', // 케이뱅크
+            'kakaobank://': 'https://apps.apple.com/kr/app/id1258016944', // 카카오뱅크
+            'lpayapp://': 'https://apps.apple.com/kr/app/id1036098908', // 롯데 L.pay
+            'smilepayapp://': 'https://apps.apple.com/kr/app/id1183156020', // 스마일페이
+        };
+
+        // 매핑 객체에서 일치하는 url 스킴을 찾아냅니다.
+        const matchedKey = Object.keys(appStoreMap).find(key => url.startsWith(key));
+
+        if (matchedKey) {
+            Linking.openURL(appStoreMap[matchedKey]).catch(() => {});
         }
     };
 
